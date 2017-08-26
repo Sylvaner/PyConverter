@@ -13,28 +13,17 @@ git clone https://github.com/Sylvaner/PyConverter
 
 # Basic usage
 ## Convert XLS to CSV
-<table>
-<tr>
-  <th>
-    Command line
-  </th>
-  <th>
-    Python script
-  </th>
-<tr>
-  <td>
-    <pre>python pyconvert.py input.xls output.csv</pre>
-  </td>
-  <td>
-    <pre>
-      from pyconvert import Convert
+### Command line
+```
+python pyconvert.py input.xls output.csv
+```
+### Python script
+```
+from pyconvert import Convert
 
-      convert = Convert()
-      convert.start('test.xls', 'test.csv')
-    </pre>
-  </td>
-</tr>
-</table>
+convert = Convert()
+convert.start('test.xls', 'test.csv')
+```
 
 ## Switch column 1 and 2, keep the third column from CSV to XLS
 <table>
