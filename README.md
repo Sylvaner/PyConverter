@@ -7,7 +7,9 @@ It can be used as a python module or directly from command line.
 It's possible to simply add transforms for your usage.
 
 # Installation
-git clone https://github.com/Sylvaner/pyconvert
+<pre>
+git clone https://github.com/Sylvaner/PyConverter
+</pre>
 
 # Basic usage
 ## Convert XLS to CSV
@@ -45,9 +47,9 @@ git clone https://github.com/Sylvaner/pyconvert
   </th>
 <tr>
   <td>
-    <pre>
-      python pyconvert.py test.csv test.xls "{\"moves\": [{\"from\": 1, \"to\": 2},{\"from\": 2, \"to\": 1},{\"from\": 3, \"to\": 3}]}"
-    </pre>
+```python
+python pyconvert.py test.csv test.xls "{\"moves\": [{\"from\": 1, \"to\": 2},{\"from\": 2, \"to\": 1},{\"from\": 3, \"to\": 3}]}"
+```
   </td>
   <td>
     <pre>
@@ -145,7 +147,9 @@ Only the config file will be showed in next examples
     <td>29399</td>
     <td>&nbsp;Male&nbsp;&nbsp;</td>
 </table>
+
 ### Output
+
 <table>
   <tr>
     <td>1</td>
@@ -173,16 +177,21 @@ Only the config file will be showed in next examples
     <td>FRODO</td>
     <td>29399</td>
 </table>
+
 ## Capitalize first column, Capitalize first letter on second column, trim third column
-<pre>
+
+```json
 {
   "moves": [
     {"from": 1, "to": 1, "transform": "to_upper"},
     {"from": 2, "to": 2, "transform": "up_first_letter"},
     {"from": 4, "to": 3, "transform": "trim"}
   ]
-}</pre>
+}
+```
+
 ### Input
+
 <table>
   <tr>
     <th>Lastname</th>
