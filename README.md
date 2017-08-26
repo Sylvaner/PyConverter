@@ -413,8 +413,6 @@ Action is a class with the name of the action and a static method called action 
 
 This method must return the data of the cell after the action.
 
-TODO
-Example with an action that concat the cell of the column 1 and the current cell : 
 ```python
 class concat_first_col():
     def action(input_data, params, current_row, current_index):
