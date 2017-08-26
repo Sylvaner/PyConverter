@@ -17,8 +17,9 @@ git clone https://github.com/Sylvaner/PyConverter
 ```
 python pyconvert.py input.xls output.csv
 ```
+
 ### Python script
-```
+```python
 from pyconvert import Convert
 
 convert = Convert()
@@ -26,34 +27,22 @@ convert.start('test.xls', 'test.csv')
 ```
 
 ## Switch column 1 and 2, keep the third column from CSV to XLS
-<table>
-<tr>
-  <th>
-    Command line
-  </th>
-  <th>
-    Python script
-  </th>
-<tr>
-  <td>
-```python
+### Command line
+```
 python pyconvert.py test.csv test.xls "{\"moves\": [{\"from\": 1, \"to\": 2},{\"from\": 2, \"to\": 1},{\"from\": 3, \"to\": 3}]}"
 ```
-  </td>
-  <td>
-    <pre>
-      from pyconvert import Convert
 
-      convert = Convert()
-      convert.start('test.xls', 'test.csv', '{"moves": [ {"from": 1, "to": 2}, {"from": 2, "to": 1}, {"from": 3, "to": 3}]}')
-    </pre>
-  </td>
-</tr>
-</table>
+### Python script
+```python
+from pyconvert import Convert
+
+convert = Convert()
+convert.start('test.xls', 'test.csv', '{"moves": [ {"from": 1, "to": 2}, {"from": 2, "to": 1}, {"from": 3, "to": 3}]}')
+```
 
 ## Use config file for convert XLS to XLSX and change the order of four columns
 Create config file named __config.json__ : 
-<pre>
+```json
 {
   "moves": [
     {"from": 4, "to": 1},
@@ -62,36 +51,28 @@ Create config file named __config.json__ :
     {"from": 1, "to": 4}
   ]
 }
-</pre>
-And call it : 
-<table>
-<tr>
-  <th>
-    Command line
-  </th>
-  <th>
-    Python script
-  </th>
-<tr>
-  <td>
-    <pre>python pyconvert.py input.xls output.xlsx config.json</pre>
-  </td>
-  <td>
-    <pre>
-      from pyconvert import Convert
+```
 
-      convert = Convert()
-      convert.start('test.xls', 'test.csv', 'config.json')
-    </pre>
-  </td>
-</tr>
-</table>
+And call it : 
+
+### Command line
+```
+python pyconvert.py input.xls output.xlsx config.json
+```
+
+### Python script
+```python
+from pyconvert import Convert
+
+convert = Convert()
+convert.start('test.xls', 'test.csv', 'config.json')
+```
 
 # Advanced usage
 Only the config file will be showed in next examples
 
 ## Add row index and remove header row
-<pre>
+```json
 {
   "ignore_first_line_header": true,
   "moves": [
@@ -101,7 +82,8 @@ Only the config file will be showed in next examples
     {"from": 3, "to": 4}
   ]
 }
-</pre>
+```
+
 ### Input
 <table>
   <tr>
@@ -289,7 +271,7 @@ __String__ : Default Windows __iso-8859-1__, Others __utf-8__
 List of columns moves and changes
 
 This is the most important key. Each move must be stored in an array with 2 keys : __from__ and __to__. The first column is 1.
-<pre>
+```json
 {
   "moves": [
     {"from": 0, "to": 1, "action": {"set_row_index": 2}},
@@ -298,100 +280,101 @@ This is the most important key. Each move must be stored in an array with 2 keys
     {"from": 2, "to": 3, "transform": "trim", "action": {"replace": {"Yes": "Y", "No": "N"}}}
   ]
 }
-</pre>
+```
+
 All transforms or actions must be specify in a move. It's possible to add multiple transforms/actions in one move.
 
 # Transformations
 ## first\_char
 Get the first char of the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "first_char"}
   ]
 }
-</pre>
+```
 ## first\_word
 Get the first word of the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "first_word"}
   ]
 }
-</pre>
+```
 ## last\_word
 Get the last word of the cell. Work with punctuation.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "last_word"}
   ]
 }
-</pre>
+```
 ## remove\_digits
 Remove all digits in the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "remove_digits"}
   ]
 }
-</pre>
+```
 ## remove\_last\_word
 Remove last word of the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "remove_last_word"}
   ]
 }
-</pre>
+```
 ## to\_lower
 Lower all character in the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "to_lower"}
   ]
 }
-</pre>
+```
 ## to\_upper
 Capitalize all character in the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "to_upper"}
   ]
 }
-</pre>
+```
 ## trim
 Remove extra spaces at the begin and the end of the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "trim"}
   ]
 }
-</pre>
+```
 ## up\_all\_first\_letters
 Capitalize first letter of all words of the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "up_all_first_letters"}
   ]
 }
-</pre>
+```
 ## up\_first\_letter
 Capitalize the first letter of the cell.
-<pre>
+```json
 {
   "moves": [
     {"from": 1, "to": 2, "transform": "up_first_letter"}
   ]
 }
-</pre>
+```
 
 ## Create a transformation
 If you need to create transformations for you project, add a python file with the name of the transformation in the directory transforms.
@@ -401,11 +384,11 @@ Transformation is a class with the name of the transformation and a static metho
 This method must return the data of the cell after the transformation.
 
 Example with the _to\_lower_ transformation : 
-<pre>
+```python
 class to_lower():
     def transform(input_data):
         return input_data.lower()
-</pre>
+```
 
 # Actions
 ## concat
@@ -432,10 +415,10 @@ This method must return the data of the cell after the action.
 
 TODO
 Example with an action that concat the cell of the column 1 and the current cell : 
-<pre>
+```python
 class concat_first_col():
     def action(input_data, params, current_row, current_index):
         return current_row[0]+input_data
-</pre>
+```
 
 
