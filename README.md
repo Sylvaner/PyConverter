@@ -196,7 +196,9 @@ Only the config file will be showed in next examples
     <td>29399</td>
     <td>&nbsp;Male&nbsp;&nbsp;</td>
 </table>
+
 ### Output
+
 <table>
   <tr>
     <th>Lastname</th>
