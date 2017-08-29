@@ -18,6 +18,9 @@ import json
 import openpyxl
 import xlrd
 import xlwt
+from odf.opendocument import OpenDocumentSpreadsheet, load as odf_load
+from odf.table import Table, TableRow, TableCell
+from odf.text import P
 
 class Convert():
     # Unknown file type
@@ -28,6 +31,8 @@ class Convert():
     NEW_EXCEL_FILE = 2
     # CSV file type
     CSV_FILE = 3
+    # ODS file type
+    ODS_FILE = 4
     # List of know extesions
     EXT_LIST = {}
     # Folder for transforms modules
@@ -50,13 +55,13 @@ class Convert():
     # CSV columns delimiter for output file
     output_csv_delimiter = ';'
     # Name of the sheet for Excel import
-    input_xls_sheet_name = None
+    input_sheet_name = None
     # Input encoding for CSV file
     input_encoding = ''
     # Ouput encoding for CSV file
     output_encoding = ''
     # Name of the sheet for Excel export
-    output_xls_sheet_name = 'export'
+    output_sheet_name = 'export'
     # Moves of columns
     moves = []
     # Number of columns in the ouput file
@@ -76,6 +81,7 @@ class Convert():
         self.EXT_LIST['csv'] = self.CSV_FILE
         self.EXT_LIST['xls'] = self.OLD_EXCEL_FILE
         self.EXT_LIST['xlsx'] = self.NEW_EXCEL_FILE
+        self.EXT_LIST['ods'] = self.ODS_FILE
         if os.path.exists(self.TRANSFORMS_FOLDER):
             sys.path.append(self.TRANSFORMS_FOLDER)
         if os.path.exists(self.ACTIONS_FOLDER):
@@ -97,8 +103,8 @@ class Convert():
         self.ignore_first_line_header = False
         self.input_csv_delimiter = ';'
         self.output_csv_delimiter = ';'
-        self.input_xls_sheet_name = None
-        self.output_xls_sheet_name = 'export'
+        self.input_sheet_name = None
+        self.output_sheet_name = 'export'
         self.moves = []
         self.output_number_of_cols = 0
         self.input_header = None
@@ -115,6 +121,7 @@ class Convert():
          - Convert.OLD_EXCEL_FILE (1) for Excel file,
          - Convert.NEW_EXCEL_FILE (2) for Excel file,
          - Convert.CSV_FILE (3) for csv file.
+         - Convert.ODS_FILE (4) for ods file.
         """
         file_type = self.UNKNOWN_FILE
 
@@ -185,9 +192,9 @@ class Convert():
            (Default: True)
          - ignore_first_line_header: Remove first line header in output 
            (Default: False)
-         - input_xls_sheet_name: Title of the sheet for Excel input 
+         - input_sheet_name: Title of the sheet for Excel and ODS input 
            (Default: first worksheet)
-         - output_xls_sheet_name: Title of the sheet for Excel output 
+         - output_sheet_name: Title of the sheet for Excel and ODS output 
            (Default: export)
          - input_encoding : Encoding using in CSV input file
          - output_encoding : Encoding using in CSV output file
@@ -217,7 +224,8 @@ class Convert():
                      'output_csv_delimiter',
                      'input_first_line_header',
                      'ignore_first_line_header',
-                     'output_xls_sheet_name',
+                     'input_sheet_name',
+                     'output_sheet_name',
                      'input_encoding',
                      'output_encoding']
         for attr in attr_list:
@@ -311,10 +319,10 @@ class Convert():
 
         workbook = xlrd.open_workbook(filename = input_filename)
         worksheet = None
-        if self.input_xls_sheet_name is None:
+        if self.input_sheet_name is None:
             worksheet = workbook.sheet_by_index(0)
         else:
-            worksheet = workbook.sheet_by_name(self.input_xls_sheet_name)
+            worksheet = workbook.sheet_by_name(self.input_sheet_name)
         
         for row_index, row_data in enumerate(range(worksheet.nrows)):
             if row_index == 0 and self.input_first_line_header:
@@ -332,7 +340,7 @@ class Convert():
         :param output_filename: Path of the output file
         """
         workbook = xlwt.Workbook()
-        worksheet = workbook.add_sheet(self.output_xls_sheet_name)
+        worksheet = workbook.add_sheet(self.output_sheet_name)
 
         for row_index, row in enumerate(self.output_data):
             for col_index, col in enumerate(row):
@@ -352,10 +360,10 @@ class Convert():
 
         workbook = openpyxl.load_workbook(input_filename)
         worksheet = None
-        if self.input_xls_sheet_name is None:
+        if self.input_sheet_name is None:
             worksheet = workbook.worksheets[0]
         else:
-            worksheet = workbook.get_sheet_by_name(self.input_xls_sheet_name)
+            worksheet = workbook.get_sheet_by_name(self.input_sheet_name)
 
         for row_index, row_data in enumerate(worksheet.rows):
             if row_index == 0 and self.input_first_line_header:
@@ -374,12 +382,71 @@ class Convert():
         """
         workbook = openpyxl.Workbook()
         worksheet = workbook.active
-        worksheet.title = self.output_xls_sheet_name
+        worksheet.title = self.output_sheet_name
 
         for row in self.output_data:
             worksheet.append(row)
         workbook.save(output_filename)
 
+    def read_input_data_from_ods(self, input_filename):
+        """Read input data from ODS file
+        :param input_filename: Name of input file
+        """
+        self.input_header = []
+        self.input_data = []
+
+        if not os.path.exists(input_filename):
+            raise Exception('Error: Input file not found.')
+
+        ods_file = odf_load(input_filename)
+        spreadsheet = None
+        if self.input_sheet_name is not None:
+            for sheet in ods_file.getElementsByType(Table):
+                if sheet.getAttribute('name') == self.input_sheet_name:
+                    spreadsheet = sheet
+        if self.input_sheet_name is None or spreadsheet is None:
+            spreadsheet = ods_file.spreadsheet
+
+        rows = spreadsheet.getElementsByType(TableRow)
+        for row_index, ods_row in enumerate(rows):
+            row = self.read_input_data_from_ods_row(ods_row)
+            if row_index == 0 and self.input_first_line_header:
+                self.input_header = row
+            else:
+                self.input_data.append(row)
+
+    def read_input_data_from_ods_row(self, row):
+        """Read row in ODS spreadsheet.
+
+        :param row: TableRow object
+
+        :return: Row data
+        :rtype: Array
+        """
+        row_data = []
+        cells = row.getElementsByType(TableCell)
+        for cell in cells:
+            cell_data = list(cell.getElementsByType(P))
+            row_data.append(str(cell_data[0]))
+        return row_data
+    
+    def write_output_data_to_ods(self, output_filename):
+        """Write output data in ODS file.
+
+        :param output_filename: Path of the output_filename.
+        """
+
+        ods_file = OpenDocumentSpreadsheet()
+        table = Table(name=self.output_sheet_name)
+        for row in self.output_data:
+            table_row = TableRow()
+            for val in row:
+                table_cell = TableCell(valuetype="string")
+                table_cell.addElement(P(text=val))
+                table_row.addElement(table_cell)
+            table.addElement(table_row)
+        ods_file.spreadsheet.addElement(table)
+        ods_file.save(output_filename)
 
     def convert(self):
         """Convert input data
@@ -483,6 +550,8 @@ class Convert():
             self.read_input_data_from_xls(input_filename)
         elif self.input_file_type == self.NEW_EXCEL_FILE:
             self.read_input_data_from_xlsx(input_filename)
+        elif self.input_file_type == self.ODS_FILE:
+            self.read_input_data_from_ods(input_filename)
 
         # Convert
         self.convert()
@@ -494,6 +563,8 @@ class Convert():
             self.write_output_data_to_xls(output_filename)
         elif self.output_file_type == self.NEW_EXCEL_FILE:
             self.write_output_data_to_xlsx(output_filename)
+        elif self.output_file_type == self.ODS_FILE:
+            self.write_output_data_to_ods(output_filename)
 
 def usage(exec_name):
     """Show usage when this script is called from command line without enough arguments

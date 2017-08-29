@@ -16,6 +16,9 @@ import unittest
 import xlrd
 import openpyxl
 import csv
+from odf.table import TableRow, TableCell
+from odf.opendocument import load as odf_load
+from odf.text import P
 from pyconverter import Convert
 
 class ConvertTest(unittest.TestCase):
@@ -99,6 +102,21 @@ class ConvertTest(unittest.TestCase):
             worksheet = workbook.get_sheet_by_name(sheet)
         return worksheet.cell(row = row, column = col).value
 
+    def get_cell_in_ods(self, filename, row_index, col_index, sheet = None):
+        """Get cell value of ods file
+
+        :param row: Row of the cell
+        :param col: Column of the cell
+        :param sheet: Sheet name
+        """
+        ods_file = odf_load(filename)
+        spreadsheet = ods_file.spreadsheet
+
+        rows = list(spreadsheet.getElementsByType(TableRow))
+        cells = list(rows[row_index - 1].getElementsByType(TableCell))
+        cell_data = list(cells[col_index - 1].getElementsByType(P))
+        return str(cell_data[0])
+
     def create_csv_test_file(self, filecsv_data, delimiter = ';'):
         """Create the CSV test file
 
@@ -159,35 +177,17 @@ class ConvertTest(unittest.TestCase):
         # Mid data
         self.assertEqual('John SMITH', self.get_cell_in_xlsx(test_file, 3, 3))
 
-    def test_xls_read(self):
-        """Test old Excel file reader
+    def test_ods_copy(self):
+        """Test self.convert to ods without parameters (copy)
         """
-        second_test_file = self.TEST_DIRECTORY+os.path.sep+'second.xlsx'
-        test_file = self.OUTPUT_BASE_FILE_PATH+'.xls'
-        self.convert.start(self.CSV_TEST_FILE_PATH, second_test_file)
-        # Read and copy to other
-        self.convert.start(second_test_file, test_file)
+        test_file = self.OUTPUT_BASE_FILE_PATH+'.ods'
+        self.convert.start(self.CSV_TEST_FILE_PATH, test_file)
         # First data
-        self.assertEqual('Activated', self.get_cell_in_xls(test_file, 1, 1))
+        self.assertEqual('Activated', self.get_cell_in_ods(test_file, 1, 1))
         # Last data
-        self.assertEqual('06/07/1977', self.get_cell_in_xls(test_file, 5, 4))
+        self.assertEqual('06/07/1977', self.get_cell_in_ods(test_file, 5, 4))
         # Mid data
-        self.assertEqual('John SMITH', self.get_cell_in_xls(test_file, 3, 3))        
-
-    def test_xlsx_read(self):
-        """Test new Excel file reader
-        """
-        second_test_file = self.TEST_DIRECTORY+os.path.sep+'second.xls'
-        test_file = self.OUTPUT_BASE_FILE_PATH+'.xlsx'
-        self.convert.start(self.CSV_TEST_FILE_PATH, second_test_file)
-        # Read and copy to other
-        self.convert.start(second_test_file, test_file)
-        # First data
-        self.assertEqual('Activated', self.get_cell_in_xlsx(test_file, 1, 1))
-        # Last data
-        self.assertEqual('06/07/1977', self.get_cell_in_xlsx(test_file, 5, 4))
-        # Mid data
-        self.assertEqual('John SMITH', self.get_cell_in_xlsx(test_file, 3, 3))        
+        self.assertEqual('John SMITH', self.get_cell_in_ods(test_file, 3, 3))
         
     def test_bad_file_extension(self):
         """Test input with extension without standard name
@@ -225,6 +225,12 @@ class ConvertTest(unittest.TestCase):
         """
         file_type = self.convert.get_file_type_by_ext('test.xlsx')
         self.assertEqual(self.convert.NEW_EXCEL_FILE, file_type)
+                         
+    def test_get_file_by_ext_ods(self):
+        """Test if .ods file name is recognized as ODS
+        """
+        file_type = self.convert.get_file_type_by_ext('test.ods')
+        self.assertEqual(self.convert.ODS_FILE, file_type)
                          
     def test_get_file_by_ext_bad_type(self):
         """Test if unknow file format is recognized as unknow file
@@ -389,10 +395,10 @@ class ConvertTest(unittest.TestCase):
         # Create Excel file
         self.convert.start(self.CSV_TEST_FILE_PATH,
                       second_test_file,
-                      '{"output_xls_sheet_name": "just_a_test"}')
+                      '{"output_sheet_name": "just_a_test"}')
         self.convert.start(second_test_file,
                       self.OUTPUT_BASE_FILE_PATH+'.xls',
-                      '{"input_xls_sheet_name": "just_a_test"}')
+                      '{"input_sheet_name": "just_a_test"}')
         self.assertEqual(self.TESTS_DATA[1][2], self.get_cell_in_xls(self.OUTPUT_BASE_FILE_PATH+'.xls', 2, 3))
         
     def test_output_xls_sheet_name(self):
@@ -400,8 +406,29 @@ class ConvertTest(unittest.TestCase):
         """
         self.convert.start(self.CSV_TEST_FILE_PATH,
                       self.OUTPUT_BASE_FILE_PATH+'.xls',
-                      '{"output_xls_sheet_name": "just_a_test"}')
+                      '{"output_sheet_name": "just_a_test"}')
         self.assertEqual(self.TESTS_DATA[1][2], self.get_cell_in_xls(self.OUTPUT_BASE_FILE_PATH+'.xls', 2, 3, 'just_a_test'))
+
+    def test_input_ods_sheet_name(self):
+        """Test if the name of the output sheet is specified in config
+        """
+        second_test_file = self.TEST_DIRECTORY+os.path.sep+'second.ods'
+        # Create Excel file
+        self.convert.start(self.CSV_TEST_FILE_PATH,
+                      second_test_file,
+                      '{"output_sheet_name": "just_a_test"}')
+        self.convert.start(second_test_file,
+                      self.OUTPUT_BASE_FILE_PATH+'.ods',
+                      '{"input_sheet_name": "just_a_test"}')
+        self.assertEqual(self.TESTS_DATA[1][2], self.get_cell_in_ods(self.OUTPUT_BASE_FILE_PATH+'.ods', 2, 3))
+        
+    def test_output_ods_sheet_name(self):
+        """Test if the name of the input sheet is specified in config
+        """
+        self.convert.start(self.CSV_TEST_FILE_PATH,
+                      self.OUTPUT_BASE_FILE_PATH+'.ods',
+                      '{"output_sheet_name": "just_a_test"}')
+        self.assertEqual(self.TESTS_DATA[1][2], self.get_cell_in_ods(self.OUTPUT_BASE_FILE_PATH+'.ods', 2, 3, 'just_a_test'))
 
     def test_one_move(self):
         """Test some moves
