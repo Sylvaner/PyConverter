@@ -37,8 +37,10 @@ class Convert():
     EXT_LIST = {}
     # Folder for transforms modules
     TRANSFORMS_FOLDER = 'transforms'
-    # Folder for actions modules a
+    # Folder for actions modules
     ACTIONS_FOLDER = 'actions'
+    # Folder for filters modules
+    FILTERS_FOLDER = 'filters'
 
     # List of modules loaded dynamically
     dynamics_modules = {}
@@ -64,6 +66,8 @@ class Convert():
     output_sheet_name = 'export'
     # Moves of columns
     moves = []
+    # Filters of rows
+    filters = None
     # Number of columns in the ouput file
     output_number_of_cols = 0
     # Header of input columns
@@ -86,6 +90,8 @@ class Convert():
             sys.path.append(self.TRANSFORMS_FOLDER)
         if os.path.exists(self.ACTIONS_FOLDER):
             sys.path.append(self.ACTIONS_FOLDER)
+        if os.path.exists(self.FILTERS_FOLDER):
+            sys.path.append(self.FILTERS_FOLDER)
 
     def set_default_values(self):
         """Set all default values of the class
@@ -106,6 +112,7 @@ class Convert():
         self.input_sheet_name = None
         self.output_sheet_name = 'export'
         self.moves = []
+        self.filters = None
         self.output_number_of_cols = 0
         self.input_header = None
         self.input_data = None
@@ -198,6 +205,20 @@ class Convert():
            (Default: export)
          - input_encoding : Encoding using in CSV input file
          - output_encoding : Encoding using in CSV output file
+         - filters : List of filter to remove rows
+            Examples :
+              1) Remove row without content in the second column
+              {
+                "filters": {"empty": 2}
+              }
+              2) Remove row without content in the third column and with
+                 the value "Yes" in the second
+              {
+                "filters": [
+                  {"is_empty": 3},
+                  {"is_value": {"Yes": 2}}
+                ]
+              }
          - moves: List of columns moves
             Examples :
               1) Switch column 1 and 2
@@ -237,6 +258,10 @@ class Convert():
         if 'output_file_type' in config.keys():
             self.output_file_type = self.EXT_LIST[config['output_file_type']]
 
+        if 'filters' in config:
+            self.filters = config['filters']
+            self.load_modules(self.FILTERS_FOLDER, self.filters)
+            
         if 'moves' in config:
             # List of moves
             if isinstance(config['moves'], dict):
@@ -271,7 +296,7 @@ class Convert():
                 self.load_modules(folder, module_item)
         # Test if module file exists
         elif not os.path.exists(folder+os.path.sep+modules_data+'.py'):
-            raise Exception('Error: missing transform "'+modules_data+'"')
+            raise Exception('Error: missing module "'+modules_data+'"')
         # If module not already loaded, load it
         elif not modules_data in self.dynamics_modules:
             self.dynamics_modules[modules_data] = getattr(__import__(modules_data), modules_data)
@@ -455,8 +480,14 @@ class Convert():
         if self.input_first_line_header and not self.ignore_first_line_header:
             self.output_data.append(self.convert_row(self.input_header, 0, True))
         for row_index, row in enumerate(self.input_data):
+            remove_this_row = False
+            # Remove filtered rows
+            if self.filters is not None:
+                if self.filter_input(self.filters, row, row_index):
+                    remove_this_row = True
             # Real row for index
-            self.output_data.append(self.convert_row(row, row_index + 1))
+            if not remove_this_row:
+                self.output_data.append(self.convert_row(row, row_index + 1))
 
     def convert_row(self, input_row, row_index, only_moves = False):
         """Convert row from input to output with moves and transform
@@ -481,6 +512,24 @@ class Convert():
             output_row = input_row
         return output_row
 
+    def filter_input(self, filter_data, current_row, current_index):
+        """Test filters on the row.
+
+        :param filter_data: Data of the filters
+        :param current_row: Data of the row to filter.
+        :param current_index: Current index of the row.
+
+        :return: True if the row must be removed.
+        """
+        if isinstance(filter_data, list):
+            for f in filter_data:
+                 if not self.filter_input(f, current_row, current_index):
+                     return False
+        else:
+            filter_name = next(iter(filter_data))
+            return self.dynamics_modules[filter_name].test_filter(filter_data[filter_name], current_row, current_index)
+        return False
+        
     def action_input(self, action_data, input_data, current_row, current_index):
         """Action on the column data.
 

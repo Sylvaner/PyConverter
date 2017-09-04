@@ -400,7 +400,15 @@ class ConvertTest(unittest.TestCase):
                       self.OUTPUT_BASE_FILE_PATH+'.xls',
                       '{"input_sheet_name": "just_a_test"}')
         self.assertEqual(self.TESTS_DATA[1][2], self.get_cell_in_xls(self.OUTPUT_BASE_FILE_PATH+'.xls', 2, 3))
-        
+
+    def test_input_filter(self):
+        """Test if the filter remove a line
+        """
+        self.convert.start(self.CSV_TEST_FILE_PATH,
+                           self.OUTPUT_BASE_FILE_PATH+'.xlsx',
+                           '{"filters": {"is_value": {"Yes": 1}}}')
+        self.assertEqual(self.TESTS_DATA[3][3], self.get_cell_in_xlsx(self.OUTPUT_BASE_FILE_PATH+'.xlsx', 2, 4))
+    
     def test_output_xls_sheet_name(self):
         """Test if the name of the input sheet is specified in config
         """
