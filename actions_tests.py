@@ -103,5 +103,26 @@ class ActionsTest(unittest.TestCase):
         from actions.set_value import set_value
         self.assertEqual('Hello The World', set_value.action('Hello The World', ['Test'], 0, 0))
     
+################################################################################
+# Tests slice action                                                           #
+################################################################################
+    def test_slice_start(self):
+        from actions.slice import slice
+        self.assertEqual('lo The World', slice.action('Hello The World', {'start': 3}, 0, 0))
+    
+    def test_slice_end(self):
+        from actions.slice import slice
+        self.assertEqual('Hel', slice.action('Hello The World', {'end': 3}, 0, 0))
+        self.assertEqual('Hello The Wo', slice.action('Hello The World', {'end': -3}, 0, 0))
+    
+    def test_slice_start_end(self):
+        from actions.slice import slice
+        self.assertEqual('lo The Wo', slice.action('Hello The World', {'start': 3, 'end': -3}, 0, 0))
+    
+    def test_slice_bad_params(self):
+        from actions.slice import slice
+        self.assertEqual('Hello The World', slice.action('Hello The World', {'Test'}, 0, 0))
+        self.assertEqual('Hello The World', slice.action('Hello The World', 'Test', 0, 0))
+    
 if __name__ == '__main__':
     unittest.main()
