@@ -86,13 +86,14 @@ class Convert():
         self.EXT_LIST['xls'] = self.OLD_EXCEL_FILE
         self.EXT_LIST['xlsx'] = self.NEW_EXCEL_FILE
         self.EXT_LIST['ods'] = self.ODS_FILE
-        if os.path.exists(self.TRANSFORMS_FOLDER):
-            sys.path.append(self.TRANSFORMS_FOLDER)
-        if os.path.exists(self.ACTIONS_FOLDER):
-            sys.path.append(self.ACTIONS_FOLDER)
-        if os.path.exists(self.FILTERS_FOLDER):
-            sys.path.append(self.FILTERS_FOLDER)
-
+        base_path = os.path.dirname(__file__)+os.path.sep
+        if os.path.exists(base_path+self.TRANSFORMS_FOLDER):
+            sys.path.append(base_path+self.TRANSFORMS_FOLDER)
+        if os.path.exists(base_path+self.ACTIONS_FOLDER):
+            sys.path.append(base_path+self.ACTIONS_FOLDER)
+        if os.path.exists(base_path+self.FILTERS_FOLDER):
+            sys.path.append(base_path+self.FILTERS_FOLDER)
+        
     def set_default_values(self):
         """Set all default values of the class
         """
@@ -260,7 +261,7 @@ class Convert():
 
         if 'filters' in config:
             self.filters = config['filters']
-            self.load_modules(self.FILTERS_FOLDER, self.filters)
+            self.load_modules(os.path.dirname(__file__)+os.path.sep+self.FILTERS_FOLDER, self.filters)
             
         if 'moves' in config:
             # List of moves
@@ -273,9 +274,9 @@ class Convert():
             for move in self.moves:
                 # Check transform library
                 if 'transform' in move:
-                    self.load_modules(self.TRANSFORMS_FOLDER, move['transform'])
+                    self.load_modules(os.path.dirname(__file__)+os.path.sep+self.TRANSFORMS_FOLDER, move['transform'])
                 if 'action' in move:
-                    self.load_modules(self.ACTIONS_FOLDER, move['action'])
+                    self.load_modules(os.path.dirname(__file__)+os.path.sep+self.ACTIONS_FOLDER, move['action'])
                 dest = int(move['to'])
                 if dest > max_col:
                     max_col = dest
