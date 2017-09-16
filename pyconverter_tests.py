@@ -362,32 +362,6 @@ class ConvertTest(unittest.TestCase):
         self.assertEqual(self.TESTS_DATA[0][2].upper(), self.get_cell_in_xls(self.OUTPUT_BASE_FILE_PATH+'.xls', 1, 1))
         self.assertEqual(self.TESTS_DATA[1][2].upper(), self.get_cell_in_xls(self.OUTPUT_BASE_FILE_PATH+'.xls', 2, 1))
         
-    def test_input_ignore_first_line_header_csv(self):
-        """Test removed first line in CSV files
-        """
-        self.convert.start(self.CSV_TEST_FILE_PATH,
-                      self.OUTPUT_BASE_FILE_PATH+'.csv',
-                      '{"ignore_first_line_header": true}')
-        with open(self.OUTPUT_BASE_FILE_PATH+'.csv', 'r') as test_file:
-            data_to_test = test_file.readlines()
-            self.assertNotEqual('Activated', data_to_test[0][0])
-
-    def test_input_ignore_first_line_header_xls(self):
-        """Test removed first line in old Excel files
-        """
-        self.convert.start(self.CSV_TEST_FILE_PATH,
-                      self.OUTPUT_BASE_FILE_PATH+'.xls',
-                      '{"ignore_first_line_header": true}')
-        self.assertEqual(self.TESTS_DATA[1][0], self.get_cell_in_xls(self.OUTPUT_BASE_FILE_PATH+'.xls', 1, 1))
-
-    def test_input_ignore_first_line_header_xlsx(self):
-        """Test removed first line in new Excel files
-        """
-        self.convert.start(self.CSV_TEST_FILE_PATH,
-                      self.OUTPUT_BASE_FILE_PATH+'.xlsx',
-                      '{"ignore_first_line_header": true}')
-        self.assertEqual(self.TESTS_DATA[1][0], self.get_cell_in_xlsx(self.OUTPUT_BASE_FILE_PATH+'.xlsx', 1, 1))
-
     def test_input_xls_sheet_name(self):
         """Test if the name of the output sheet is specified in config
         """
@@ -437,6 +411,15 @@ class ConvertTest(unittest.TestCase):
                       self.OUTPUT_BASE_FILE_PATH+'.ods',
                       '{"output_sheet_name": "just_a_test"}')
         self.assertEqual(self.TESTS_DATA[1][2], self.get_cell_in_ods(self.OUTPUT_BASE_FILE_PATH+'.ods', 2, 3, 'just_a_test'))
+
+    def test_remove_header(self):
+        """Test remove header
+        """
+        self.convert.start(self.CSV_TEST_FILE_PATH,
+                           self.OUTPUT_BASE_FILE_PATH+'.xls',
+                           '{"remove_header": "true"}')
+        self.assertEqual(self.TESTS_DATA[1][0],
+                         self.get_cell_in_xls(self.OUTPUT_BASE_FILE_PATH+'.xls', 1, 1))
 
     def test_one_move(self):
         """Test some moves

@@ -64,6 +64,8 @@ class Convert():
     output_encoding = ''
     # Name of the sheet for Excel export
     output_sheet_name = 'export'
+    # Remove header
+    remove_header = False
     # Moves of columns
     moves = []
     # Filters of rows
@@ -112,6 +114,7 @@ class Convert():
         self.output_csv_delimiter = ';'
         self.input_sheet_name = None
         self.output_sheet_name = 'export'
+        self.remove_header = False
         self.moves = []
         self.filters = None
         self.output_number_of_cols = 0
@@ -204,6 +207,7 @@ class Convert():
            (Default: first worksheet)
          - output_sheet_name: Title of the sheet for Excel and ODS output 
            (Default: export)
+         - remove_header: Remove the header in the output file
          - input_encoding : Encoding using in CSV input file
          - output_encoding : Encoding using in CSV output file
          - filters : List of filter to remove rows
@@ -248,6 +252,7 @@ class Convert():
                      'ignore_first_line_header',
                      'input_sheet_name',
                      'output_sheet_name',
+                     'remove_header',
                      'input_encoding',
                      'output_encoding']
         for attr in attr_list:
@@ -478,7 +483,9 @@ class Convert():
         """Convert input data
         """
         self.output_data = []
-        if self.input_first_line_header and not self.ignore_first_line_header:
+        if self.input_first_line_header and \
+           not self.ignore_first_line_header and \
+           not self.remove_header:
             self.output_data.append(self.convert_row(self.input_header, 0, True))
         for row_index, row in enumerate(self.input_data):
             remove_this_row = False
