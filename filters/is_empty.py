@@ -19,6 +19,6 @@ class is_empty():
         if isinstance(params, str):
             params = int(str)
         if isinstance(params, int):
-            if current_row[params - 1] == '':
+            if current_row[params - 1] == '' or current_row[params - 1] == None:
                 return True
         return False
